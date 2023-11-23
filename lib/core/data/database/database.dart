@@ -1,15 +1,10 @@
-import 'dart:io';
-
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../../res/color_print.dart';
-import '../../../utils/local_storage.dart';
-import '../../../utils/ui_utils.dart';
-import '../../../utils/utils.dart';
 import 'data_base_keys.dart';
-import 'models/user_model.dart';
+import 'models/resume_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _databaseHelper = DatabaseHelper._();
@@ -20,7 +15,7 @@ class DatabaseHelper {
     return _databaseHelper;
   }
 
-  final String _databaseName = 'quotation_maker.db';
+  final String _databaseName = 'resume_maker.db';
   Database? _database;
 
   Future<void> initDatabase() async {
@@ -42,14 +37,24 @@ class DatabaseHelper {
         //* -=-=-=-=-=-=-=-=-=>  Tables <-=-=-=-=-=-=-=-=-= //
         await db.execute(
           """
-        CREATE TABLE ${DatabaseKey.userTable}
+        CREATE TABLE ${DatabaseKey.resumeTable}
           (
             uid $textType $notNull,
             name $textType,
             email $textType,
-            profileImage $textType,
-            backUpType $textType,
-            createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            designation $textType,
+            mobileNumber $textType,
+            dateOfBirth $textType,
+            address $textType,
+            collegeName $textType,
+            degree $textType,
+            startYear $textType,
+            endYear $textType,
+            skill $textType,
+            fresherOrExperience $textType,
+            experienceOfYear $textType,
+            createdAt $textType,
+            updateAt $textType
           )
       """,
         );
@@ -57,169 +62,101 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> backupDatabaseToFirebase({bool autoBackup = false}) async {
-    if (await getConnectivityResult(showToast: false)) {
-      final databasesPath = await getDatabasesPath();
-      final sourcePath = join(databasesPath, _databaseName);
+  //* -=-=-=-=-=-=-=-=-=>  Resume Info Module (Start) <-=-=-=-=-=-=-=-=-= //
+  //? Get all Resume list
+  Future<List<ResumeModel>?> getAllResumeModel({RxBool? isLoader}) async {
+    try {
+      isLoader?.value = true;
 
-      // Close the database before uploading
-      // await _database?.close();
+      final List<ResumeModel> resumeListModel = (await _database?.query(
+        DatabaseKey.resumeTable,
+        orderBy: 'uid DESC',
+      ))!
+          .map((e) => ResumeModel.fromJson(e))
+          .toList();
 
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child("backup")
-          .child(LocalStorage.firebaseUid.value);
-      final File sourceFile = File(sourcePath);
-
-      try {
-        if (autoBackup == false) {
-          UiUtils.toast("Backup Started...");
-          printYellow("Backup Started...");
-        }
-
-        await storageRef.putFile(sourceFile).then(
-          (_) async {
-            FullMetadata fullMetadata = await storageRef.getMetadata();
-            await LocalStorage.storeBackUpTime(
-                backUpTime: fullMetadata.updated.toString());
-          },
-        );
-
-        if (autoBackup == false) {
-          UiUtils.toast("Backup Completed!");
-          printOkStatus("Backup Completed!");
-        }
-
-        printOkStatus(
-            "Database backed up to Firebase Storage"); //! Only on test
-      } catch (e) {
-        printWarning('Error uploading database: $e');
+      if (resumeListModel.isNotEmpty) {
+        return resumeListModel;
+      } else {
+        return null;
       }
-
-      // Reopen the database
-      await initDatabase();
+    } catch (e) {
+      printError(type: "getAllProductModel function", errText: "$e");
+    } finally {
+      isLoader?.value = false;
     }
+    return null;
   }
 
-  Future<void> restoreDatabaseFromFirebase() async {
-    if (await getConnectivityResult(showToast: false)) {
-      final databasesPath = await getDatabasesPath();
-      final targetPath = join(databasesPath, _databaseName);
+  //? Get single resume
+  Future<ResumeModel?> getSingleResumeModel(
+      {required String quotationId, RxBool? isLoader}) async {
+    try {
+      isLoader?.value = true;
 
-      // Close the database before restoring
-      await _database?.close();
+      final List<ResumeModel> resumeModel = (await _database?.query(
+        DatabaseKey.resumeTable,
+        where: 'uid = ?',
+        whereArgs: [quotationId],
+      ))!
+          .map((e) => ResumeModel.fromJson(e))
+          .toList();
 
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child("backup")
-          .child(LocalStorage.firebaseUid.value);
-      final File targetFile = File(targetPath);
-
-      try {
-        await storageRef.writeToFile(targetFile);
-        printOkStatus(
-            "Database restored from Firebase Storage"); //! Only on test
-      } catch (e) {
-        printWarning('Error restoring database: $e');
+      if (resumeModel.isNotEmpty) {
+        return resumeModel.first;
+      } else {
+        return null;
       }
-
-      // Reopen the database
-      await initDatabase();
+    } catch (e) {
+      printError(type: "getAllQuotationsModel function", errText: "$e");
+    } finally {
+      isLoader?.value = false;
     }
+    return null;
   }
 
-  Future<bool> isUserExistOrNot() async {
-    bool isFirstTime = false;
-    await FirebaseStorage.instance
-        .ref()
-        .child("backup")
-        .child(LocalStorage.firebaseUid.value)
-        .getDownloadURL()
-        .then(
-      (value) {
-        isFirstTime = false;
-      },
-    ).catchError((onError) {
-      isFirstTime = true;
-    });
-    return isFirstTime;
+  //? Set Resume information
+  Future<ResumeModel?> setResumeData({required ResumeModel resumeModel}) async {
+    final id = await _database?.insert(
+      DatabaseKey.resumeTable,
+      resumeModel.toJson(),
+    );
+    printData(key: "Add Resume", value: id);
+    return resumeModel;
   }
 
-  //* -=-=-=-=-=-=-=-=-=>  User Module (Start) <-=-=-=-=-=-=-=-=-= //
-  //? Get user information
-  Future<UserModel?> getUserInfoModel(/* {required String userID} */) async {
-    List<UserModel> userDbModel = (await _database?.query(
-      DatabaseKey.userTable,
+  //? Update Resume information
+  Future<ResumeModel?> updateResumeData(
+      {required ResumeModel resumeModel}) async {
+    final id = await _database?.update(
+      DatabaseKey.resumeTable,
       where: 'uid = ?',
-      whereArgs: [LocalStorage.firebaseUid.value],
-    ))!
-        .map((e) => UserModel.fromJson(e))
-        .toList();
+      whereArgs: [resumeModel.uid],
+      resumeModel.toJson(),
+    );
+    printData(key: "Update Resume", value: id);
+    return resumeModel;
+  }
 
-    if (userDbModel.isNotEmpty) {
-      return userDbModel.first;
-    } else {
+  //? Clear resume info
+  Future<String?> deleteResume({required String resumeId}) async {
+    final String tableName = DatabaseKey.resumeTable;
+
+    try {
+      await _database?.delete(
+        tableName,
+        where: 'uid = ?',
+        whereArgs: [
+          resumeId,
+        ],
+      );
+
+      printData(key: "Delete resume in local DB", value: "resumeId: $resumeId");
+      return resumeId;
+    } catch (err) {
+      printError(type: "Function: deleteQuotation", errText: err);
       return null;
     }
   }
-
-  //? Set user information
-  Future<int> setUserData(
-      {required String userId,
-      String? userName,
-      String? userEmail,
-      String? profileImage}) async {
-    final id = await _database?.insert(
-      DatabaseKey.userTable,
-      {
-        "uid": userId,
-        "name": userName,
-        "email": userEmail,
-        "backUpType": "weekly",
-        "profileImage": profileImage,
-      },
-    );
-
-    printData(key: "uid", value: userId);
-    printData(key: "name", value: userName);
-    printData(key: "email", value: userEmail);
-    printData(key: "backUpType", value: "weekly");
-    printData(key: "profileImage", value: profileImage);
-    return id ?? 0;
-  }
-
-  Future<int> setUserBackUpType({required String backUpType}) async {
-    final id = await _database?.update(
-      DatabaseKey.userTable,
-      where: "uid = ?",
-      whereArgs: [LocalStorage.firebaseUid.value],
-      {
-        "backUpType": backUpType,
-      },
-    );
-
-    printData(key: "backUpType", value: backUpType);
-    return id ?? 0;
-  }
-
-  //? Delete user information
-  Future<void> deleteUserData() async {
-    /* Use in logout actions */
-    try {
-      await _database?.delete(
-        DatabaseKey.userTable,
-        where: "uid = ?",
-        whereArgs: [LocalStorage.firebaseUid.value],
-      ).then(
-        (value) {
-          printData(
-              key: "Delete user in local DB",
-              value: LocalStorage.firebaseUid.value);
-        },
-      );
-    } catch (err) {
-      printError(type: "Function: deleteUserData", errText: err);
-    }
-  }
-  //* -=-=-=-=-=-=-=-=-=>  User Module (End) <-=-=-=-=-=-=-=-=-= //
+//* -=-=-=-=-=-=-=-=-=>  Resume Info Module (End) <-=-=-=-=-=-=-=-=-= //
 }

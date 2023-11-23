@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/data/database/database.dart';
+import '../../core/data/database/models/resume_model.dart';
+import '../../utils/utils.dart';
+
 class AddOrEditResumeController extends GetxController {
   Rx<TextEditingController> nameCon = TextEditingController().obs;
   RxBool nameValid = false.obs;
@@ -48,6 +52,52 @@ class AddOrEditResumeController extends GetxController {
   RxBool experienceOfYearValid = false.obs;
   RxString experienceOfYearError = ''.obs;
 
-  RxString verticalGroupValue = "Fresher".obs;
+  RxString fresherOrExperience = "Fresher".obs;
   final status = ["Fresher", "Experience"];
+
+  RxString resumeId = "".obs;
+  RxBool isLoader = false.obs;
+
+  /// Update module
+  RxBool isUpdateResume = false.obs;
+  Rx<ResumeModel> resumeModel = ResumeModel().obs;
+
+  @override
+  void onInit() {
+    // TODO: implement onInit
+    super.onInit();
+    if (Get.arguments != null) {
+      if (!isValEmpty(Get.arguments["resumeId"])) {
+        resumeId.value = Get.arguments['resumeId'];
+        isUpdateResume.value = true;
+        DatabaseHelper()
+            .getSingleResumeModel(
+                quotationId: resumeId.value, isLoader: isLoader)
+            .then(
+          (value) async {
+            if (value != null) {
+              resumeModel.value = value;
+              await setLocalDataToModel();
+            }
+          },
+        );
+      }
+    }
+  }
+
+  Future setLocalDataToModel() async {
+    nameCon.value.text = resumeModel.value.name ?? "";
+    emailCon.value.text = resumeModel.value.email ?? "";
+    designationCon.value.text = resumeModel.value.designation ?? "";
+    mobileNumberCon.value.text = resumeModel.value.mobileNumber ?? "";
+    confirmDate.value = resumeModel.value.dateOfBirth ?? "";
+    addressCon.value.text = resumeModel.value.address ?? "";
+    collegeCon.value.text = resumeModel.value.collegeName ?? "";
+    degreeCon.value.text = resumeModel.value.degree ?? "";
+    startYearCon.value.text = resumeModel.value.startYear ?? "";
+    endYearCon.value.text = resumeModel.value.endYear ?? "";
+    skillCon.value.text = resumeModel.value.skill ?? "";
+    skillCon.value.text = resumeModel.value.skill ?? "";
+    fresherOrExperience.value = resumeModel.value.fresherOrExperience ?? "";
+  }
 }

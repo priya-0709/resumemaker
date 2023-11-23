@@ -12,7 +12,10 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Image.asset("assets/images/logo.png"),
+        child: Text(
+          "Resume Maker",
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
       ),
     );
   }

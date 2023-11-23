@@ -3,14 +3,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:group_radio_button/group_radio_button.dart';
+import 'package:resumemaker/core/data/database/models/resume_model.dart';
 import 'package:resumemaker/res/app_button.dart';
 import 'package:resumemaker/res/app_text_field.dart';
 import 'package:resumemaker/res/color_print.dart';
+import 'package:resumemaker/route/app_routes.dart';
 import 'package:resumemaker/utils/ui_utils.dart';
 import 'package:resumemaker/utils/utils.dart';
 
+import '../../core/data/database/database.dart';
 import '../../res/app_strings.dart';
 import '../../res/app_theme.dart';
+import '../../res/icon_button.dart';
+import '../dashboard/dashboard_controller.dart';
 import 'add_or_edit_resume_controller.dart';
 
 class AddOrEditResumeScreen extends StatelessWidget {
@@ -22,6 +27,13 @@ class AddOrEditResumeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Create your resume"),
+        leading: AppIconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(
+            Icons.arrow_back,
+            size: 25,
+          ),
+        ),
       ),
       body: Obx(
         () => ListView(
@@ -286,11 +298,11 @@ class AddOrEditResumeScreen extends StatelessWidget {
               height: 20.0,
               child: RadioGroup<String>.builder(
                 direction: Axis.horizontal,
-                groupValue: con.verticalGroupValue.value,
+                groupValue: con.fresherOrExperience.value,
                 horizontalAlignment: MainAxisAlignment.spaceAround,
                 onChanged: (value) {
-                  con.verticalGroupValue.value = value ?? "";
-                  printWhite(con.verticalGroupValue.value);
+                  con.fresherOrExperience.value = value ?? "";
+                  printWhite(con.fresherOrExperience.value);
                 },
                 items: con.status,
                 textStyle: TextStyle(
@@ -303,32 +315,32 @@ class AddOrEditResumeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            if (con.verticalGroupValue.value == "Experience")
+            if (con.fresherOrExperience.value == "Experience")
               const SizedBox(height: defaultPadding),
-            if (con.verticalGroupValue.value == "Experience")
+            if (con.fresherOrExperience.value == "Experience")
               AppTextField(
                 title: "How many years of experience?",
                 hintText: "Enter your experience",
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.done,
-                controller: con.endYearCon.value,
-                showError: con.endYearValid.value,
-                errorMessage: con.endYearError.value,
+                controller: con.experienceOfYearCon.value,
+                showError: con.experienceOfYearValid.value,
+                errorMessage: con.experienceOfYearError.value,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(2),
                 ],
                 onChanged: (val) {
-                  if (con.endYearValid.value == true) {
-                    con.endYearValid.value = false;
+                  if (con.experienceOfYearValid.value == true) {
+                    con.experienceOfYearValid.value = false;
                   }
                 },
                 padding: const EdgeInsets.only(bottom: defaultPadding),
               ),
-            if (con.verticalGroupValue.value != "Experience")
+            if (con.fresherOrExperience.value != "Experience")
               const SizedBox(height: defaultPadding),
             AppButton(
-              onPressed: () {
+              onPressed: () async {
                 /// name validation
                 if (con.nameCon.value.text.trim().isEmpty) {
                   con.nameValid.value = true;
@@ -431,18 +443,104 @@ class AddOrEditResumeScreen extends StatelessWidget {
                 }
 
                 if (con.nameValid.isFalse &&
-                    con.emailValid.isFalse &&
-                    con.degreeValid.isFalse &&
-                    con.mobileNumberValid.isFalse &&
-                    con.confirmDate.value.isNotEmpty &&
-                    con.addressValid.isFalse &&
-                    con.collegeValid.isFalse &&
-                    con.degreeValid.isFalse &&
-                    con.startYearValid.isFalse &&
-                    con.endYearValid.isFalse &&
-                    con.skillValid.isFalse &&
-                    con.experienceOfYearValid.isFalse) {
+                        con.emailValid.isFalse &&
+                        con.degreeValid.isFalse &&
+                        con.mobileNumberValid.isFalse &&
+                        con.confirmDate.value.isNotEmpty &&
+                        con.addressValid.isFalse &&
+                        con.collegeValid.isFalse &&
+                        con.degreeValid.isFalse &&
+                        con.startYearValid.isFalse &&
+                        con.endYearValid.isFalse &&
+                        con.skillValid
+                            .isFalse /* &&
+                    con.experienceOfYearValid.isFalse*/
+                    ) {
                   printOkStatus("Done");
+
+                  if (con.isUpdateResume.isFalse) {
+                    await DatabaseHelper()
+                        .setResumeData(
+                      resumeModel: ResumeModel(
+                        uid: DateTime.now().millisecondsSinceEpoch.toString(),
+                        name: con.nameCon.value.text.trim(),
+                        email: con.emailCon.value.text.trim(),
+                        designation: con.designationCon.value.text.trim(),
+                        mobileNumber: con.mobileNumberCon.value.text.trim(),
+                        dateOfBirth: con.confirmDate.value,
+                        address: con.addressCon.value.text.trim(),
+                        collegeName: con.collegeCon.value.text.trim(),
+                        degree: con.degreeCon.value.text.trim(),
+                        startYear: con.startYearCon.value.text.trim(),
+                        endYear: con.endYearCon.value.text.trim(),
+                        skill: con.skillCon.value.text.trim(),
+                        fresherOrExperience: con.fresherOrExperience.value,
+                        experienceOfYear:
+                            con.experienceOfYearCon.value.text.trim(),
+                        createdAt: DateTime.now(),
+                      ),
+                    )
+                        .then(
+                      (resumeModel) {
+                        if (resumeModel != null) {
+                          if (Get.isRegistered<DashboardController>()) {
+                            final DashboardController dashCon =
+                                Get.find<DashboardController>();
+                            dashCon.resumeList.add(resumeModel);
+                            UiUtils.toast("Quotation added successfully");
+                            Get.back();
+                            Get.toNamed(
+                              AppRoutes.pdfGenerateScreen,
+                              arguments: {
+                                "quotationModel": resumeModel,
+                              },
+                            );
+                          }
+                        }
+                      },
+                    );
+                  } else {
+                    await DatabaseHelper()
+                        .updateResumeData(
+                      resumeModel: ResumeModel(
+                        uid: DateTime.now().millisecondsSinceEpoch.toString(),
+                        name: con.nameCon.value.text.trim(),
+                        email: con.emailCon.value.text.trim(),
+                        designation: con.designationCon.value.text.trim(),
+                        mobileNumber: con.mobileNumberCon.value.text.trim(),
+                        dateOfBirth: con.confirmDate.value,
+                        address: con.addressCon.value.text.trim(),
+                        collegeName: con.collegeCon.value.text.trim(),
+                        degree: con.degreeCon.value.text.trim(),
+                        startYear: con.startYearCon.value.text.trim(),
+                        endYear: con.endYearCon.value.text.trim(),
+                        skill: con.skillCon.value.text.trim(),
+                        fresherOrExperience: con.fresherOrExperience.value,
+                        experienceOfYear:
+                            con.experienceOfYearCon.value.text.trim(),
+                        updateAt: DateTime.now(),
+                      ),
+                    )
+                        .then(
+                      (quotationModel) {
+                        if (quotationModel != null) {
+                          if (Get.isRegistered<DashboardController>()) {
+                            final DashboardController dashCon =
+                                Get.find<DashboardController>();
+                            int myIndex = dashCon.resumeList.indexWhere(
+                                (element) => element.uid == quotationModel.uid);
+                            if (myIndex != -1) {
+                              dashCon.resumeList.removeAt(myIndex);
+                              dashCon.resumeList
+                                  .insert(myIndex, quotationModel);
+                            }
+                            UiUtils.toast("Resume update successfully");
+                            Get.back();
+                          }
+                        }
+                      },
+                    );
+                  }
                 }
               },
               title: "Create",

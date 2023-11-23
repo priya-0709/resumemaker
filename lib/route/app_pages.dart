@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../view/add_or_edit_resume/add_or_edit_resume_screen.dart';
 import '../view/dashboard/dashboard_screen.dart';
+import '../view/pdf/pdf_generate_screen.dart';
 import '../view/splash/splash_screen.dart';
 import 'app_routes.dart';
 
@@ -18,6 +19,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.addOrUpdateResumeScreen,
       page: () => AddOrEditResumeScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.pdfGenerateScreen,
+      page: () => PdfGenerateScreen(),
     ),
   ];
 }
