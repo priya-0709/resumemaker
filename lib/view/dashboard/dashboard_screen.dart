@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../core/controller/base_controller.dart';
 import '../../res/icon_button.dart';
+import '../../route/app_routes.dart';
 import 'components/logout_dialog.dart';
 import 'dashboard_controller.dart';
 
@@ -35,6 +36,12 @@ class DashboardScreen extends StatelessWidget {
               );
             },
           ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          child: const Icon(Icons.add, color: Colors.white),
+          onPressed: () {
+            Get.toNamed(AppRoutes.addOrUpdateResumeScreen);
+          },
         ),
       ),
     );

@@ -504,6 +504,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.12.0+4"
+  group_radio_button:
+    dependency: "direct main"
+    description:
+      name: group_radio_button
+      sha256: "204de8d16b224be7fc72dade0c3afd410ff5a34417d89f74f0fd8be7a8c2b4d6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.0"
   http:
     dependency: transitive
     description:
@@ -941,6 +949,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  syncfusion_flutter_core:
+    dependency: transitive
+    description:
+      name: syncfusion_flutter_core
+      sha256: "8a1220f978491f56431c66dacf1bb97bf2abcd1458b542fe0dfbf1a630c67260"
+      url: "https://pub.dev"
+    source: hosted
+    version: "23.2.4"
+  syncfusion_flutter_datepicker:
+    dependency: "direct main"
+    description:
+      name: syncfusion_flutter_datepicker
+      sha256: a676067cb93697f059f84b2a4d143234273a1f9b10d0b5540bb63297d1f93f74
+      url: "https://pub.dev"
+    source: hosted
+    version: "23.2.4"
   synchronized:
     dependency: transitive
     description:

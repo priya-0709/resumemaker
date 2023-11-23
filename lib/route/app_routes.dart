@@ -4,7 +4,7 @@ class AppRoutes {
   static String businessInfoScreen = '/BUSINESS_INFO_SCREEN';
   static String selectBusinessScreen = '/SELECT_BUSINESS_SCREEN';
   static String dashboardScreen = '/DASHBOARD_SCREEN';
-  static String addOrUpdateQuotationScreen = '/ADD_OR_UPDATE_QUOTATION_SCREEN';
+  static String addOrUpdateResumeScreen = '/ADD_OR_UPDATE_QUOTATION_SCREEN';
   static String productListScreen = '/PRODUCT_LIST_SCREEN';
   static String quotationDetailScreen = '/QUOTATION_DETAIL_SCREEN';
   static String pdfGenerateScreen = '/PDF_GENERATE_SCREEN';
